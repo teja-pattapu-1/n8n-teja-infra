@@ -172,27 +172,6 @@ resource "google_cloud_run_v2_service" "this" {
         }
       }
 
-      startup_probe {
-        http_get {
-          path = "/health"
-          port = 5678
-        }
-        initial_delay_seconds = 30
-        timeout_seconds       = 5
-        period_seconds        = 15
-        failure_threshold     = 10
-      }
-
-      liveness_probe {
-        http_get {
-          path = "/health"
-          port = 5678
-        }
-        initial_delay_seconds = 60
-        timeout_seconds       = 5
-        period_seconds        = 30
-        failure_threshold     = 3
-      }
     }
   }
 

@@ -183,7 +183,8 @@ resource "google_cloud_run_v2_service" "this" {
       }
 
       liveness_probe {
-        tcp_socket {
+        http_get {
+          path = "/"
           port = 5678
         }
         initial_delay_seconds = 60

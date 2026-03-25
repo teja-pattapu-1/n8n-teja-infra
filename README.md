@@ -11,35 +11,36 @@ Terraform for a personal n8n sandbox on GCP.
 - Cloud Run service running a pinned n8n image
 - IAM service accounts and GitHub Workload Identity Federation for `n8n-teja-workflows` and `n8n-teja-infra`
 
+## State and delivery
+
+- Terraform state lives in the shared GCS bucket `project-c4dba17b-b260-4522-859-tfstate` under the `n8n-teja-infra` prefix.
+- Infra changes are meant to run from GitHub Actions, not from a local laptop.
+- The main workflow plans on pull requests and applies on pushes to `main`.
+- A separate manual workflow handles full destroys.
+
+## GitHub Actions variables
+
+Set these repository variables in `teja-pattapu-1/n8n-teja-infra`:
+
+- `GCP_PROJECT_ID`
+- `WIF_PROVIDER`
+- `GCP_TERRAFORM_SA`
+
+This repo is wired to reuse the same project-level GitHub federation pattern as the existing personal infra setup.
+
 ## Access model
 
-This sandbox defaults to a private Cloud Run service. After deploy, use:
+This sandbox now defaults to a public Cloud Run service so you can open the n8n editor directly at the deployed service URL.
 
-```bash
-gcloud run services proxy n8n-teja --project YOUR_PROJECT_ID --region us-central1 --port 8080
+After the first successful deploy, if you want n8n to use a stable external URL for editor links and webhooks, set:
+
+```hcl
+public_base_url = "https://your-service-url.run.app"
 ```
 
-Then open `http://127.0.0.1:8080` locally to complete the first-owner setup in n8n.
-
-If you later want webhook-friendly public access, set `public_base_url` and optionally `allow_unauthenticated = true`, then apply again.
-
-## First-time setup
-
-```bash
-gcloud auth application-default login
-gcloud config set project YOUR_PROJECT_ID
-
-cp terraform.tfvars.example terraform.tfvars
-# edit terraform.tfvars
-
-terraform init
-terraform plan
-terraform apply
-```
+and let GitHub Actions apply again.
 
 ## Notes
 
-- This uses local Terraform state for the sandbox.
 - The Cloud Run service starts with a pinned n8n image from the official registry.
 - The repo includes an Artifact Registry repository so you can later simulate a custom image build/deploy flow.
-

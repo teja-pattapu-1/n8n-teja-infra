@@ -1,0 +1,107 @@
+name: Terraform CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  TF_VERSION: "1.5.7"
+  TF_IN_AUTOMATION: "true"
+  TF_VAR_project_id: ${{ vars.GCP_PROJECT_ID }}
+
+concurrency:
+  group: terraform-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  terraform:
+    name: Terraform Plan & Apply
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TERRAFORM_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -input=false -no-color -out=tfplan | tee plan.txt
+
+      - name: Update PR with Plan
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        env:
+          PLAN_FILE: plan.txt
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync(process.env.PLAN_FILE, 'utf8');
+            const body = [
+              `#### Terraform Plan \`${{ steps.plan.outcome }}\``,
+              '',
+              '<details><summary>Show plan</summary>',
+              '',
+              '```terraform',
+              plan.slice(0, 60000),
+              '```',
+              '',
+              '</details>',
+              '',
+              `Triggered by @${{ github.actor }} on \`${{ github.ref }}\`.`
+            ].join('\n');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });
+
+      - name: Terraform Apply
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: terraform apply -input=false -auto-approve tfplan
+
+      - name: Publish Outputs
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          {
+            echo "## Terraform Outputs"
+            echo
+            echo "- Service URL: $(terraform output -raw service_url)"
+            echo "- WIF Provider: $(terraform output -raw wif_provider)"
+            echo "- Terraform CI SA: $(terraform output -raw terraform_ci_service_account_email)"
+          } >> "$GITHUB_STEP_SUMMARY"

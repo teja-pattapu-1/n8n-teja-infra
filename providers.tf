@@ -1,6 +1,11 @@
 terraform {
   required_version = ">= 1.5.0"
 
+  backend "gcs" {
+    bucket = "project-c4dba17b-b260-4522-859-tfstate"
+    prefix = "n8n-teja-infra"
+  }
+
   required_providers {
     google = {
       source  = "hashicorp/google"
@@ -26,4 +31,3 @@ provider "google-beta" {
   project = var.project_id
   region  = var.region
 }
-

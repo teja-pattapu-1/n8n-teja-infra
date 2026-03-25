@@ -84,11 +84,11 @@ variable "cloud_run_max_instances" {
 variable "allow_unauthenticated" {
   description = "Whether to allow public access to the Cloud Run service."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "authorized_invoker" {
-  description = "Google account email allowed to invoke the private Cloud Run service."
+  description = "Google account email allowed to invoke the private Cloud Run service when public access is disabled."
   type        = string
   default     = ""
 }

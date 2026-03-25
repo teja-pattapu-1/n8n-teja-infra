@@ -33,11 +33,6 @@ output "wif_provider" {
   value       = module.iam.wif_provider
 }
 
-output "proxy_command" {
-  description = "Command to proxy the private Cloud Run service locally."
-  value       = "gcloud run services proxy ${var.service_name} --project ${var.project_id} --region ${var.region} --port 8080"
-}
-
 output "github_setup_instructions" {
   description = "Values to copy into GitHub Actions variables and secrets later."
   value       = <<-EOT
@@ -49,8 +44,7 @@ output "github_setup_instructions" {
 
   Infra repo variables for ${var.infra_github_repo}:
     GCP_PROJECT_ID=${var.project_id}
-    GCP_TERRAFORM_SA_EMAIL=${module.iam.terraform_ci_sa_email}
+    GCP_TERRAFORM_SA=${module.iam.terraform_ci_sa_email}
     WIF_PROVIDER=${module.iam.wif_provider}
   EOT
 }
-

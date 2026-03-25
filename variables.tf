@@ -54,7 +54,7 @@ variable "timezone" {
 variable "n8n_image" {
   description = "Pinned n8n image for the sandbox."
   type        = string
-  default     = "docker.n8n.io/n8nio/n8n:1.115.2"
+  default     = "docker.io/n8nio/n8n:1.115.2"
 }
 
 variable "github_repo" {
@@ -98,4 +98,3 @@ variable "public_base_url" {
   type        = string
   default     = ""
 }
-

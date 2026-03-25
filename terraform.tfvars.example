@@ -1,0 +1,7 @@
+project_id          = "project-c4dba17b-b260-4522-859"
+authorized_invoker  = "you@example.com"
+allow_unauthenticated = false
+
+# Optional after first deploy if you want a stable public base URL:
+# public_base_url = "https://your-service-url.run.app"
+
